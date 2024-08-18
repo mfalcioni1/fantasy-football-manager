@@ -1,0 +1,44 @@
+Rosters
+Standard rosters include one Quarterback (QB), two Running Backs (RB), two Wide Receivers (WR), one Tight End (TE), one Flex (RB/WR/TE), one Defense/Special Teams (D/ST), one Kicker (K) and seven Bench Spots (BE -- players on your roster who are not in your active lineup for a given week).
+
+Scoring
+Quarterbacks (QB), Running Backs (RB), Wide Receivers (WR), Tight Ends (TE)
+6 pts per rushing or receiving TD
+6 pts for player returning kick/punt for TD
+6 pts for player returning or recovering a fumble for TD
+4 pts per passing TD
+2 pts per rushing or receiving 2 pt conversion (note: teams do not receive points
+for yardage gained during the conversion)
+2 pts per passing 2 pt conversion
+1 pt per 10 yards rushing or receiving
+1 pt per 25 yards passing
+1 pt per for every reception
+
+Bonus Points
+2 pts per rushing or receiving TD of 40 yards or more
+2 pts per passing TD of 40 yards or more
+(note: the player must score a touchdown to score the points)
+
+Penalty Points
+-2 pts per intercepted pass
+-2 pts per fumble lost
+
+Kickers (K)
+5 pts per 50+ yard FG made
+4 pts per 40-49 yard FG made
+3 pts per FG made, 39 yards or less
+2 pts per rushing, passing, or receiving 2 pt conversion
+1 pt per Extra Point made
+Penalty Points
+-2 pts per missed FG (0-39 yds)
+-1 pt per missed FG (40-49 yds)
+(note: a missed FG includes any attempt that is blocked, deflected, etc.)
+
+Defensive/Special Teams (D)
+
+3 pts per defensive or special teams TD
+2 pts per interception
+2 pts per fumble recovery (Note: includes a fumble by the opposing team out of the end zone)
+2 pts per blocked punt, PAT, or FG (Note: a deflected kick of any kind does not receive points)
+2 pts per safety
+1 pt per sack

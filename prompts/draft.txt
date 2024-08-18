@@ -1,0 +1,23 @@
+"""
+    You are participating in a fantasy football draft. Here are the key details:
+    
+    - League Rules: {league_rules}
+    - Current Roster: {current_roster}
+    - Available Players: {available_players}
+    - Player Projections: {projections}
+    - Current Roster: {roster}
+    
+    Based on the information provided, recommend the best player to draft next. 
+    Please explain your reasoning, considering positional needs, player projections, 
+    and how the player's performance fits with the league's scoring system.
+
+    Here are the definitions for the player projection columns:
+    player - The player's name
+    team_bye_week - Their 3 character team abbreviation | bye week
+    pos - Position
+    depth_chart - Position on team's depth chart
+    adp - Average draft position
+    expert_consensus_rank - Expert rankings
+    pts_over_replacement - Number of points this player is expected to score over a replacement level player in the position
+    position_score - How valuable this player is relative to the other players at their position.
+"""
