@@ -12,9 +12,15 @@ import dim
 from players import player_ids
 import os
 from datetime import datetime, timedelta
+import logging
+import sys
+
+# Add these imports at the top of the file
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', stream=sys.stdout)
 
 def scrape_cbs(pos: List[str] = ["QB", "RB", "WR", "TE", "K", "DST"], season: int = None, week: int = None,
                draft: bool = True, weekly: bool = True) -> Dict[str, pd.DataFrame]:
+    logging.info("Starting CBS scrape")
     if season is None:
         season = get_scrape_year()
     if week is None:
@@ -29,6 +35,7 @@ def scrape_cbs(pos: List[str] = ["QB", "RB", "WR", "TE", "K", "DST"], season: in
 
     l_pos = {}
     for pos in pos:
+        logging.info(f"Scraping {pos} projections from CBS")
         scrape_link = f"https://www.cbssports.com/fantasy/football/stats/{pos}/{season}/{scrape_week}/projections/nonppr/"
 
         time.sleep(2)  # Delay between requests
@@ -75,10 +82,12 @@ def scrape_cbs(pos: List[str] = ["QB", "RB", "WR", "TE", "K", "DST"], season: in
 
         l_pos[pos] = out_df
 
+    logging.info("CBS scrape completed")
     return l_pos
 
 def scrape_nfl(pos: List[str] = ["QB", "RB", "WR", "TE", "K", "DST"], season: int = None, week: int = None,
                draft: bool = True, weekly: bool = True) -> Dict[str, pd.DataFrame]:
+    logging.info("Starting NFL scrape")
     print("\nThe NFL.com scrape uses a 2 second delay between pages")
 
     if season is None:
@@ -94,6 +103,7 @@ def scrape_nfl(pos: List[str] = ["QB", "RB", "WR", "TE", "K", "DST"], season: in
 
     l_pos = {}
     for pos in pos:
+        logging.info(f"Scraping {pos} projections from NFL")
         pos_scrape = dim.nfl_pos_idx[pos]
 
         n_records = {
@@ -147,10 +157,12 @@ def scrape_nfl(pos: List[str] = ["QB", "RB", "WR", "TE", "K", "DST"], season: in
 
         l_pos[pos] = out_df
 
+    logging.info("NFL scrape completed")
     return l_pos
 
 def scrape_fantasysharks(pos: List[str] = ["QB", "RB", "WR", "TE", "K", "DST", "DL", "LB", "DB"],
                          season: int = None, week: int = None, draft: bool = True, weekly: bool = True) -> Dict[str, pd.DataFrame]:
+    logging.info("Starting FantasySharks scrape")
     print("\nThe FantasySharks scrape uses a 2 second delay between pages")
 
     if season is None:
@@ -167,6 +179,7 @@ def scrape_fantasysharks(pos: List[str] = ["QB", "RB", "WR", "TE", "K", "DST", "
 
     l_pos = {}
     for pos in pos:
+        logging.info(f"Scraping {pos} projections from FantasySharks")
         position = {
             "QB": 1, "RB": 2, "WR": 4, "TE": 5, "K": 7, "DST": 6,
             "DL": 8, "LB": 9, "DB": 10
@@ -199,12 +212,14 @@ def scrape_fantasysharks(pos: List[str] = ["QB", "RB", "WR", "TE", "K", "DST", "
 
         l_pos[pos] = pos_df
 
+    logging.info("FantasySharks scrape completed")
     return l_pos
 
 @sleep_and_retry
 @limits(calls=1, period=5)
 def scrape_walterfootball(pos: List[str] = ["QB", "RB", "WR", "TE", "K"],
                           season: int = None, week: int = None, draft: bool = True, weekly: bool = False) -> Dict[str, pd.DataFrame]:
+    logging.info("Starting WalterFootball scrape")
     if season is None:
         season = get_scrape_year()
     if week is None:
@@ -216,6 +231,7 @@ def scrape_walterfootball(pos: List[str] = ["QB", "RB", "WR", "TE", "K"],
 
     l_pos = {}
     for pos in pos:
+        logging.info(f"Scraping {pos} projections from WalterFootball")
         print(f"Scraping {pos} projections")
 
         position = {
@@ -253,12 +269,14 @@ def scrape_walterfootball(pos: List[str] = ["QB", "RB", "WR", "TE", "K"],
 
         l_pos[pos] = df
 
+    logging.info("WalterFootball scrape completed")
     return l_pos
 
 @sleep_and_retry
 @limits(calls=1, period=2)
 def scrape_fleaflicker(pos: List[str] = ["QB", "RB", "WR", "TE", "K", "DST", "DL", "LB", "DB"],
                        season: int = None, week: int = None, draft: bool = False, weekly: bool = True) -> Dict[str, pd.DataFrame]:
+    logging.info("Starting FleaFlicker scrape")
     if season is None:
         season = get_scrape_year()
     if week is None:
@@ -274,6 +292,7 @@ def scrape_fleaflicker(pos: List[str] = ["QB", "RB", "WR", "TE", "K", "DST", "DL
 
     l_pos = {}
     for pos in pos:
+        logging.info(f"Scraping {pos} projections from FleaFlicker")
         position = {
             "QB": 4, "RB": 1, "WR": 2, "TE": 8, "K": 16, "DST": 256,
             "DE": 2048, "DT": 64, "LB": 128, "CB": 512, "S": 1024
@@ -329,10 +348,12 @@ def scrape_fleaflicker(pos: List[str] = ["QB", "RB", "WR", "TE", "K", "DST", "DL
 
         l_pos[pos] = out_df
 
+    logging.info("FleaFlicker scrape completed")
     return l_pos
 
 def scrape_numberfire(pos: List[str] = ["QB", "RB", "WR", "TE", "K", "DST", "LB", "DB", "DL"],
                       season: int = None, week: int = None, draft: bool = True, weekly: bool = True) -> Dict[str, pd.DataFrame]:
+    logging.info("Starting NumberFire scrape")
     print("\nThe NumberFire scrape uses a 2 second delay between pages")
 
     if season is None:
@@ -347,6 +368,7 @@ def scrape_numberfire(pos: List[str] = ["QB", "RB", "WR", "TE", "K", "DST", "LB"
 
     l_pos = {}
     for pos in site_pos:
+        logging.info(f"Scraping {pos} projections from NumberFire")
         position = {
             "QB": "qb", "RB": "rb", "WR": "wr", "TE": "te", "K": "k", "DST": "d", "LB": "idp"
         }[pos]
@@ -410,10 +432,12 @@ def scrape_numberfire(pos: List[str] = ["QB", "RB", "WR", "TE", "K", "DST", "LB"
         l_idp = {p: df_idp[df_idp['pos'] == p] for p in ["LB", "DB", "DL"] if p in pos}
         l_pos.update(l_idp)
 
+    logging.info("NumberFire scrape completed")
     return l_pos
 
 def scrape_fftoday(pos: List[str] = ["QB", "RB", "WR", "TE", "K", "DST", "DL", "LB", "DB"],
                    season: int = None, week: int = None, draft: bool = True, weekly: bool = True) -> Dict[str, pd.DataFrame]:
+    logging.info("Starting FFToday scrape")
     print("\nThe FFToday scrape uses a 2 second delay between pages")
 
     if season is None:
@@ -441,6 +465,7 @@ def scrape_fftoday(pos: List[str] = ["QB", "RB", "WR", "TE", "K", "DST", "DL", "
 
     l_pos = {}
     for pos in pos:
+        logging.info(f"Scraping {pos} projections from FFToday")
         position = position_map[pos]
         out_dfs = []
 
@@ -498,10 +523,12 @@ def scrape_fftoday(pos: List[str] = ["QB", "RB", "WR", "TE", "K", "DST", "DL", "
 
         l_pos[pos] = pd.concat(out_dfs, ignore_index=True)
 
+    logging.info("FFToday scrape completed")
     return l_pos
 
 def scrape_fantasypros(pos: List[str] = ["QB", "RB", "WR", "TE", "K", "DST"],
                        season: int = None, week: int = None, draft: bool = True, weekly: bool = True) -> Dict[str, pd.DataFrame]:
+    logging.info("Starting FantasyPros scrape")
     print("\nThe FantasyPros scrape uses a 2 second delay between pages")
 
     if season is None:
@@ -516,6 +543,7 @@ def scrape_fantasypros(pos: List[str] = ["QB", "RB", "WR", "TE", "K", "DST"],
 
     l_pos = {}
     for pos in pos:
+        logging.info(f"Scraping {pos} projections from FantasyPros")
         scrape_link = f"https://www.fantasypros.com/nfl/projections/{pos.lower()}{scrape_week}"
 
         time.sleep(2)  # Delay between requests
@@ -562,10 +590,12 @@ def scrape_fantasypros(pos: List[str] = ["QB", "RB", "WR", "TE", "K", "DST"],
 
         l_pos[pos] = out_df
 
+    logging.info("FantasyPros scrape completed")
     return l_pos
 
 def scrape_rtsports(pos: List[str] = ["QB", "RB", "WR", "TE", "K", "DST"],
                     season: int = None, week: int = 0, draft: bool = True, weekly: bool = False) -> Dict[str, pd.DataFrame]:
+    logging.info("Starting RTSports scrape")
     print("\nThe RTSports scrape uses a 5 second delay between pages")
 
     if season is None:
@@ -583,6 +613,7 @@ def scrape_rtsports(pos: List[str] = ["QB", "RB", "WR", "TE", "K", "DST"],
 
     l_pos = {}
     for x in pos:
+        logging.info(f"Scraping {x} projections from RTSports")
         if x != pos[0]:
             time.sleep(5)
 
@@ -620,13 +651,13 @@ def scrape_rtsports(pos: List[str] = ["QB", "RB", "WR", "TE", "K", "DST"],
 
         l_pos[x] = out_df
 
+    logging.info("RTSports scrape completed")
     return l_pos
 
 def scrape_espn(pos: List[str] = ["QB", "RB", "WR", "TE", "K", "DST"],
                 season: int = None, week: int = None,
                 draft: bool = True, weekly: bool = True) -> Dict[str, pd.DataFrame]:
-    print("\nThe ESPN scrape uses a 2 second delay between pages")
-
+    logging.info("Starting ESPN scrape")
     if season is None:
         season = get_scrape_year()
     if week is None:
@@ -637,6 +668,7 @@ def scrape_espn(pos: List[str] = ["QB", "RB", "WR", "TE", "K", "DST"],
 
     l_pos = {}
     for pos in position:
+        logging.info(f"Scraping {pos} projections from ESPN")
         if pos != position[0]:
             time.sleep(2)
 
@@ -715,12 +747,14 @@ def scrape_espn(pos: List[str] = ["QB", "RB", "WR", "TE", "K", "DST"],
 
         l_pos[pos] = out_df
 
+    logging.info("ESPN scrape completed")
     return l_pos
 
 def run_all_scrapes(pos: List[str] = ["QB", "RB", "WR", "TE", "K", "DST"], 
                     season: int = None, week: int = None, 
                     force_update: bool = False, 
                     update_threshold: int = 24) -> Dict[str, Dict[str, pd.DataFrame]]:
+    logging.info("Starting run_all_scrapes function")
     if season is None:
         season = get_scrape_year()
     if week is None:
@@ -745,32 +779,40 @@ def run_all_scrapes(pos: List[str] = ["QB", "RB", "WR", "TE", "K", "DST"],
         file_path = f"data/{site}_projections_{season}_week{week}.json"
         
         if force_update or not file_exists_and_recent(file_path, update_threshold):
-            print(f"Scraping {site} projections...")
+            logging.info(f"Scraping {site} projections...")
             scrape_result = scrape_func(pos=pos, season=season, week=week)
             save_scrape_result(scrape_result, file_path)
             all_scrapes[site] = scrape_result
         else:
-            print(f"Loading existing {site} projections...")
+            logging.info(f"Loading existing {site} projections...")
             all_scrapes[site] = load_scrape_result(file_path)
 
+    logging.info("run_all_scrapes function completed")
     return all_scrapes
 
 def file_exists_and_recent(file_path: str, hours: int) -> bool:
     if not os.path.exists(file_path):
+        logging.info(f"File {file_path} does not exist")
         return False
     
     file_modified_time = datetime.fromtimestamp(os.path.getmtime(file_path))
-    return datetime.now() - file_modified_time < timedelta(hours=hours)
+    is_recent = datetime.now() - file_modified_time < timedelta(hours=hours)
+    logging.info(f"File {file_path} exists and is {'recent' if is_recent else 'not recent'}")
+    return is_recent
 
 def save_scrape_result(scrape_result: Dict[str, pd.DataFrame], file_path: str):
+    logging.info(f"Saving scrape result to {file_path}")
     with open(file_path, 'w') as f:
         json.dump({k: v.to_dict(orient='records') for k, v in scrape_result.items()}, f)
 
 def load_scrape_result(file_path: str) -> Dict[str, pd.DataFrame]:
+    logging.info(f"Loading scrape result from {file_path}")
     with open(file_path, 'r') as f:
         data = json.load(f)
     return {k: pd.DataFrame(v) for k, v in data.items()}
 
 if __name__ == "__main__":
+    logging.info("Script started")
     all_projections = run_all_scrapes(force_update=False, update_threshold=24)
+    logging.info("Script completed")
 

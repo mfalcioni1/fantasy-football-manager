@@ -1,97 +1,143 @@
-import os
-import json
-import requests
 import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+import time
+from datetime import datetime, timedelta
+import os
 
-# Constants
-DATA_DIR = "data/"
-PLAYER_IDS_FILE = os.path.join(DATA_DIR, "player_ids.csv")
-MFL_API_URL = "https://api.myfantasyleague.com/2024/export?TYPE=players&L=&APIKEY=&DETAILS=1&SINCE=&PLAYERS=&JSON=1"
-
-# Load player IDs from local CSV if available, otherwise get from API
-def load_player_ids():
-    if not os.path.exists(PLAYER_IDS_FILE):
-        # Fetch data from MyFantasyLeague API
-        response = requests.get(MFL_API_URL)
-        data = response.json()["players"]["player"]
-
-        # Convert to DataFrame
-        df = pd.json_normalize(data)
-
-        # Extract first and last names
-        df[['last_name', 'first_name']] = df['name'].str.extract(r'(.+),\s(.+)')
-
-        # Clean up the data
-        df = df.applymap(lambda x: str(x).replace("[^a-zA-Z0-9.-]", "") if isinstance(x, str) else x)
-        df["name"] = df["first_name"] + " " + df["last_name"]
-
-        # Save to local file
-        df.to_csv(PLAYER_IDS_FILE, index=False)
-        return df
-    else:
-        return pd.read_csv(PLAYER_IDS_FILE)
-
-# Perform necessary transformations on the data
-def update_player_ids(curr_ids, new_ids, updated_ids):
-    curr_cols = [col for col in curr_ids.columns if col.endswith("_id") and col != "id"]
+def fetch_cbs_data(positions, year):
+    cbs_data = []
+    base_url = f"https://www.cbssports.com/fantasy/football/depth-chart/{year}/"
     
-    # Ensure we're using the correct 'id' column
-    id_col = 'id' if 'id' in curr_ids.columns else 'id_x'
+    for position in positions:
+        time.sleep(5)
+        print(f"Starting {position}")
+        url = base_url + position
+        response = requests.get(url)
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        cols12 = [a['href'] for a in soup.select("table > tbody > tr > td > span.CellPlayerName--short > span > a")]
+        cols3 = [a['href'] for a in soup.select("table > tbody > tr > td > div > div > span.CellPlayerName--short > span > a")]
+        
+        cols = list(set(cols12 + cols3))
+        
+        for col in cols:
+            player_name = os.path.basename(os.path.dirname(col))
+            player_id = os.path.basename(os.path.dirname(os.path.dirname(col)))
+            cbs_data.append({
+                'player_names': player_name,
+                'player_id': player_id,
+                'position': position
+            })
     
-    # Create 'merge_id' column if it doesn't exist in new_ids
-    if 'merge_id' not in new_ids.columns:
-        new_ids['merge_id'] = new_ids['first_name'] + new_ids['last_name']
+    return pd.DataFrame(cbs_data)
+
+def fetch_fftoday_data(positions, year):
+    fft_data = []
+    base_url = f"https://fftoday.com/stats/players?Pos="
     
-    for j in curr_cols:
-        if j in updated_ids.columns and j in new_ids.columns:
-            df_updated = updated_ids[[id_col, "merge_id", j]].copy()
-            df_new = new_ids.dropna(subset=[j, id_col])[[id_col, 'merge_id', j]].copy()
+    for position in positions:
+        time.sleep(5)
+        print(f"Starting {position}")
+        url = f"{base_url}{position}&Year={year}"
+        response = requests.get(url)
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        cols = [a['href'] for a in soup.select("body > center > table:nth-child(4) > tr:nth-child(2) > td.bodycontent > table:nth-child(7) > tr > td > span.smallbody > a")]
+        
+        for col in cols:
+            player_name = os.path.basename(col)
+            player_id = os.path.basename(os.path.dirname(col))
+            fft_data.append({
+                'player_names': player_name,
+                'player_id': player_id,
+                'pos': position
+            })
+    
+    return pd.DataFrame(fft_data)
+
+def fetch_fantasypros_data(positions, year):
+    fp_data = []
+    base_url = f"https://www.fantasypros.com/nfl/stats/"
+    
+    for position in positions:
+        time.sleep(5)
+        print(f"Starting {position}")
+        url = f"{base_url}{position.lower()}.php?year={year}"
+        response = requests.get(url)
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        player_elements = soup.select("td.player-label > a.player-name")
+        internal_id_elements = soup.select("a.fp-player-link")
+        
+        for player_el, internal_el in zip(player_elements, internal_id_elements):
+            name_id = player_el['href'].split('/')[-1].split('.')[0]
+            internal_id = internal_el['class'][-1].split('-')[-1]
+            player_name = internal_el['fp-player-name']
             
-            # Merge df_updated and df_new
-            merged = df_updated.merge(df_new, on='merge_id', how='outer', suffixes=('', '_new'))
-            
-            # Update the column values
-            merged[j] = merged[f'{j}_new'].fillna(merged[j])
-            
-            # Merge with curr_ids
-            curr_ids = curr_ids.merge(merged[[id_col, j]], on=id_col, how="left", suffixes=('', '_new'))
-            
-            # Update the column in curr_ids
-            curr_ids[j] = curr_ids[f'{j}_new'].fillna(curr_ids[j])
-            curr_ids = curr_ids.drop(columns=[f'{j}_new'])
-            
-            # Convert NA to -1 for integer columns
-            if curr_ids[j].dtype == 'float64':
-                curr_ids[j] = curr_ids[j].fillna(-1).astype('int64')
+            fp_data.append({
+                'player_name': player_name,
+                'pos': position,
+                'name_id': name_id,
+                'internal_id': internal_id
+            })
+    
+    return pd.DataFrame(fp_data)
 
-    return curr_ids.drop_duplicates()
-
-# Main logic to load, update, and save player IDs
-def load_and_update_player_ids():
-    player_ids = load_player_ids()
-
-    # Example: Dummy updated/new data to show process
-    # Replace these with actual fetches/logic similar to the original R code
-    updated_ids = player_ids.copy()
-    updated_ids['merge_id'] = updated_ids['first_name'] + updated_ids['last_name']
-    new_ids = player_ids.copy()
-
-    # Process the update logic
-    player_ids = update_player_ids(player_ids, new_ids, updated_ids)
-
-    # Ensure all ID columns are integers
-    id_columns = [col for col in player_ids.columns if col.endswith('_id') or col == 'id']
-    for col in id_columns:
-        player_ids[col] = player_ids[col].fillna(-1).astype('int64')
-
-    # Save the updated data back
-    player_ids.to_csv(PLAYER_IDS_FILE, index=False)
+def get_player_ids(year, week, force_update=False):
+    cache_file = f'player_ids_cache_{year}_week_{week}.pkl'
+    cache_expiry = timedelta(days=7)  # Cache expires after 7 days
+    
+    if os.path.exists(cache_file) and not force_update:
+        cache_time = datetime.fromtimestamp(os.path.getmtime(cache_file))
+        if datetime.now() - cache_time < cache_expiry:
+            print("Loading cached player IDs...")
+            return pd.read_pickle(cache_file)
+    
+    print(f"Fetching new player IDs for year {year}, week {week}...")
+    
+    # Fetch data from different sources
+    cbs_positions = ['QB', 'RB', 'WR', 'TE', 'K']
+    cbs_df = fetch_cbs_data(cbs_positions, year)
+    
+    fftoday_positions = ['QB', 'RB', 'WR', 'TE', 'K']
+    fftoday_df = fetch_fftoday_data(fftoday_positions, year)
+    
+    fp_positions = ['QB', 'RB', 'WR', 'TE', 'K', 'DST']
+    fp_df = fetch_fantasypros_data(fp_positions, year)
+    
+    # Process and merge data
+    cbs_final = cbs_df.assign(
+        cbs_id=cbs_df['player_id'],
+        merge_id=cbs_df['player_names'].str.replace(r'\(-)|-', '', regex=True) + '_' + cbs_df['position'].str.lower()
+    )[['cbs_id', 'merge_id']]
+    
+    fftoday_final = fftoday_df.assign(
+        fftoday_id=fftoday_df['player_id'],
+        merge_id=fftoday_df['player_names'].str.replace(r'[^\w\s]', '', regex=True).str.lower().str.replace(r'\s+', '', regex=True) + '_' + fftoday_df['pos'].str.lower()
+    )[['fftoday_id', 'merge_id']]
+    
+    fp_final = fp_df.assign(
+        fantasypro_id=fp_df['name_id'],
+        fantasypro_num_id=fp_df['internal_id'],
+        merge_id=fp_df['player_name'].str.replace(r'[^\w\s]', '', regex=True).str.lower().str.replace(r'\s+', '', regex=True) + '_' + fp_df['pos'].str.lower()
+    )[['fantasypro_id', 'fantasypro_num_id', 'merge_id']].drop_duplicates(subset=['merge_id'])
+    
+    # Merge all dataframes
+    player_ids = pd.merge(cbs_final, fftoday_final, on='merge_id', how='outer')
+    player_ids = pd.merge(player_ids, fp_final, on='merge_id', how='outer')
+    
+    # Add year and week columns
+    player_ids['year'] = year
+    player_ids['week'] = week
+    
+    # Save to cache
+    player_ids.to_pickle(cache_file)
     
     return player_ids
 
-# Load player_ids when the module is imported
-player_ids = load_and_update_player_ids()
-
-if __name__ == "__main__":
-    # This will run only if the script is executed directly
-    print("Player IDs loaded and updated.")
+# Usage
+year = 2024  # Replace with the desired year
+week = 2     # Replace with the desired week
+player_ids_df = get_player_ids(year, week)
+print(player_ids_df.head())
